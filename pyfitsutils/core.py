@@ -25,10 +25,10 @@ def fit_block_to_source_dict(fit_block: list[str]) -> Tuple[dict[str, str],dict[
             matches = re.search(r"(?P<value>\-?[0-9\.]+)\sarcsec", fit_block[i+2].strip())
             band_dict["minor"] = matches.group("value")
         elif line.startswith("--- Integrated:"):
-            matches = re.search(r"(?P<value>[0-9\.]+)\s\+\/\-\s(?P<error>[0-9\.]+\s[mµ])Jy", line)
-            if matches.group("error").endswith("µ"):
+            matches = re.search(r"(?P<value>[0-9\.]+)\s\+\/\-\s(?P<error>[0-9\.]+\s[mu])Jy", line)
+            if matches.group("error").endswith("u"):
                 source_dict["flux"] = str(Decimal(matches.group("value"))/1000)
-                source_dict["flux_err"] = str(Decimal(matches.group("error").strip("µ "))/1000)
+                source_dict["flux_err"] = str(Decimal(matches.group("error").strip("u "))/1000)
             else:                
                 source_dict["flux"] = matches.group("value")
                 source_dict["flux_err"] = matches.group("error").strip("m ")
