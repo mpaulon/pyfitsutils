@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "pyfitsutils"
+version = "1.0.0"
+description = "Utilities for playing with astrophysics fit files"
+readme = "README.md"
+license = "MIT"
+
+authors = [
+    "Michaël PAULON <michael@paulon.org>"
+]
+
+packages = [
+]
+
+include = [ 
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.urls]
+repository = "https://github.com/mpaulon/pyfitsutils"
+
+[tool.poetry.scripts]
+pyfitsutils = "pyfitsutils.core:cli"
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
