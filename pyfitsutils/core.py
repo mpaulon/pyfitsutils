@@ -150,7 +150,7 @@ def merge_dicts(new_dict, old_dict):
             for source in datasources["sources"]:
                 matching_sources = list(filter(lambda x: are_same(x, source, ["is_main"]), old_dict.get(date, {}).get(band, {}).get("sources", [])))
                 if len(matching_sources) == 1:
-                    source["is_main"] = matching_sources[0]["is_main"]
+                    source["is_main"] = matching_sources[0].get("is_main", "")
                 new_sources.append(source)
                 new_dict[date][band]["sources"] = new_sources
     return new_dict
