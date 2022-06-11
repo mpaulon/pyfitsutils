@@ -3,11 +3,11 @@ from pathlib import Path
 import re
 from typing import Any, Tuple
 
-from . import utils
+from . import utils, drawmainsource, drawangsep
 
 def fit_block_to_source_dict(fit_block: list[str]) -> Tuple[dict[str, str],dict[str, str]]:
     """Take a block for a measurement in a fit file an return the corresponding dictionary"""
-    source_dict = {}
+    source_dict = {"is_main": ""}
     band_dict = {}
     for i, line in enumerate(fit_block):
         line = line.strip()
@@ -100,12 +100,13 @@ def fit_dict_to_csv(fit_dict: dict[str,Any], filename: Path):
                         s["dec"],
                         s["dec_err"],
                         s["flux"],
-                        s["flux_err"]
+                        s["flux_err"],
+                        str(s["is_main"]),
                     ]) for s in data_sources["sources"]]
                 ])
                 f.write(line + "\n")
-    
 
+SOURCE_LEN = 7
 
 def fit_csv_to_dict(fit_csv: Path):
     """Return a fit dict from a specified csv"""
@@ -126,25 +127,77 @@ def fit_csv_to_dict(fit_csv: Path):
                 "data": dict(zip(["freq", "major", "minor"], line[2:5]))
             }
             fits_dict[fit_date][fit_freq]["sources"] = []
-            for i in range(5, len(line[5:]), 6):
+            for i in range(5, len(line[5:]), SOURCE_LEN):
                 fits_dict[fit_date][fit_freq]["sources"].append(
-                    dict(zip(["ra", "ra_err", "dec", "dec_err", "flux", "flux_err"],line[i:i+6]))
+                    dict(zip(["ra", "ra_err", "dec", "dec_err", "flux", "flux_err", "is_main"],line[i:i+SOURCE_LEN]))
                 )
     return fits_dict
 
+def are_same(d1, d2, ignore_keys=[]):
+    for key, value in d1.items():
+        if key in ignore_keys:
+            continue
+        if d2.get(key) != value:
+            return False
+    return True
+
+def merge_dicts(new_dict, old_dict):
+    if old_dict == {}:
+        return new_dict
+    for date, bands in new_dict.items():
+        for band, datasources in bands.items():
+            new_sources = []
+            for source in datasources["sources"]:
+                matching_sources = list(filter(lambda x: are_same(x, source, ["is_main"]), old_dict.get(date, {}).get(band, {}).get("sources", [])))
+                if len(matching_sources) == 1:
+                    source["is_main"] = matching_sources[0]["is_main"]
+                new_sources.append(source)
+                new_dict[date][band]["sources"] = new_sources
+    return new_dict
 
 def cli():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("fitsfolder", type=Path, help="folder containing fit files")
     parser.add_argument("csvpath", type=Path, help="csv file will be saved here")
+    parser.add_argument("imagesfolder", type=Path, help="folder containing fits images")
+    parser.add_argument("--drawband", type=str, help="draw only images for this specific band")
     parser.add_argument("--draw", action="store_true", help="WIP: draw figures")
+    parser.add_argument("--getmain", action="store_true", help="draw figures and ask for input to get main source")
+    parser.add_argument("--forcegetmain", action="store_true", help="force getmain to ignore already checked sources")
+    parser.add_argument("--drawangsep", type=str, help="draw angsep for specified band")
     parser.add_argument("--nogencsv", action="store_true", help="do not regenerate csv file")
     args = parser.parse_args()
     if not args.nogencsv:
         fit_dict = fit_folder_to_dict(args.fitsfolder)
+        try:
+            orig_dict = fit_csv_to_dict(args.csvpath)
+        except FileNotFoundError:
+            orig_dict = {}
+        fit_dict = merge_dicts(fit_dict, orig_dict)
         fit_dict_to_csv(fit_dict, args.csvpath)
-    print(fit_csv_to_dict(args.csvpath))
+    else:
+        fit_dict = fit_csv_to_dict(args.csvpath)
+
+    if args.draw:
+        drawmainsource.init()
+        for date, bands in fit_dict.items():
+            for band, datasources in bands.items():
+                drawmainsource.draw(date, band, datasources["sources"], args.imagesfolder)
+    elif args.getmain or args.drawangsep:
+        drawmainsource.init()
+        for date, bands in fit_dict.items():
+            for band, datasources in bands.items():
+                if any([s["is_main"] == "" for s in datasources["sources"]]) or args.forcegetmain:
+                    sources = drawmainsource.getmain(date, band, datasources["sources"], args.imagesfolder)
+                sources = datasources["sources"]
+                if sources is None:
+                    continue
+                fit_dict[date][band]["sources"] = sources
+        fit_dict_to_csv(fit_dict, args.csvpath)
+    
+    if args.drawangsep:
+        drawangsep.draw(fit_dict, args.drawangsep, args.imagesfolder)
 
 if __name__ == "__main__":
     cli()

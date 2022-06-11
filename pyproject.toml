@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "pyfitsutils"
-version = "1.0.0"
+version = "1.1.0"
 description = "Utilities for playing with astrophysics fit files"
 readme = "README.md"
 license = "MIT"
 
 authors = [
-    "Michaël PAULON <michael@paulon.org>"
+    "Michaël PAULON <michael@paulon.org>",
+    "Mathilde ESPINASSE <mespinasse@crans.org>"
 ]
 
 packages = [
@@ -16,7 +17,10 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
+aplpy = "*"
+numpy = "*"
+matplotlib ="*"
 
 [tool.poetry.urls]
 repository = "https://github.com/mpaulon/pyfitsutils"

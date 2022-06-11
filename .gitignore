@@ -1,3 +1,5 @@
 fits/
+images/
 env/
 *.csv
+*.ipynb
