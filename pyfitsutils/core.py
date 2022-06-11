@@ -144,7 +144,7 @@ def cli():
     if not args.nogencsv:
         fit_dict = fit_folder_to_dict(args.fitsfolder)
         fit_dict_to_csv(fit_dict, args.csvpath)
-    print(fit_csv_to_dict(Path("fits.csv")))
+    print(fit_csv_to_dict(args.csvpath))
 
 if __name__ == "__main__":
     cli()
