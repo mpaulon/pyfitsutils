@@ -81,7 +81,7 @@ def draw(date, band, sources, images_folder: Path):
     radius = DICT_RADIUS[f"{band}band"]
 
 
-    fig = plt.figure(figsize=(14, 14))
+    fig = plt.figure(figsize=(8, 8))
 
     #IMAGE FINALE
     print(img_file.as_posix())

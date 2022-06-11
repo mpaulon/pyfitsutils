@@ -194,7 +194,7 @@ def cli():
                 if sources is None:
                     continue
                 fit_dict[date][band]["sources"] = sources
-        fit_dict_to_csv(fit_dict, args.csvpath)
+                fit_dict_to_csv(fit_dict, args.csvpath)
     
     if args.drawangsep:
         drawangsep.draw(fit_dict, args.drawangsep, args.imagesfolder)
