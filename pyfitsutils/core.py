@@ -42,6 +42,7 @@ def fit_folder_to_dict(fit_folder: Path) -> dict[str,Any]:
     """Take the path of a folder containing fit files and return the corresponding dict"""
     fits_dict = {}
     for fit_file in fit_folder.iterdir():
+        print(fit_file)
         with open(fit_file) as f:
             current_block = []
             for line in f:
