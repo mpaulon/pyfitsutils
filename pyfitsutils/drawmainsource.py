@@ -31,6 +31,12 @@ from .import utils
 DICT_SHEET = {}
 DICT_RADIUS = {"Lband" : 0.003, "Cband" : 0.0025, "Xband" : 0.002, "Kuband" : 0.0015, "Kband" : 0.001}
 
+WINDOW_SIZE = 8
+FONT_SIZE = 10
+AXIS_SIZE = 10
+TITLE_SIZE = 20
+LEGEND_SIZE = 10
+
 # position de ref du 7juin, avec erreur
 TARGET = {
     "ra": 267.0210530583,
@@ -110,17 +116,17 @@ def draw(date, band, sources, images_folder: Path):
     f1.show_lines(line_liste,color='dodgerblue',linewidth=1.5,layer='cross')
 
     for i, source in enumerate(sources):
-        f1.add_label(utils.ra2deg(source["ra"]),utils.dec2deg(source["dec"]), '{i}'.format(i=i), color='magenta', size=20) #croix sur position target
+        f1.add_label(utils.ra2deg(source["ra"]),utils.dec2deg(source["dec"]), '{i}'.format(i=i), color='magenta', size=LABEL_SIZE) #croix sur position target
 
 
     f1.axis_labels.show()
     f1.tick_labels.show()
     f1.tick_labels.set_xformat('hh:mm:ss.ss')
     f1.tick_labels.set_yformat('dd:mm:ss.s')
-    f1.tick_labels.set_font(size=20)
-    f1.axis_labels.set_font(size=20)
+    f1.tick_labels.set_font(size=AXIS_SIZE)
+    f1.axis_labels.set_font(size=AXIS_SIZE)
 
-    f1.set_title(f"XTE J1748-288 {date} {band} with robust=0",fontsize = 32)
+    f1.set_title(f"XTE J1748-288 {date} {band} with robust=0",fontsize = TITLE_SIZE)
 
     # pour la barre de 1arcsec en bas à gauche
     f1.add_scalebar(1./3600)
@@ -128,7 +134,7 @@ def draw(date, band, sources, images_folder: Path):
     f1.scalebar.set_color('white')
     f1.scalebar.set_corner('bottom left')
     f1.scalebar.set_label('1 arcsec')
-    f1.scalebar.set_font_size(15)
+    f1.scalebar.set_font_size(LEGEND_SIZE)
 
 
 
