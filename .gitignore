@@ -1,5 +1,9 @@
 fits/
 images/
 env/
+__pycache__/
+output/
 *.csv
 *.ipynb
+*.prof
+*.png
