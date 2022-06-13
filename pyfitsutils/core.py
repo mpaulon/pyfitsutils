@@ -150,9 +150,9 @@ def fit_csv_to_dict(fit_csv: Path):
                 fits_dict[fit_date][fit_freq]["sources"].append(
                     {
                         "ra": Angle(line[i], "hourangle"),
-                        "ra_err": Angle(line[i+1], "hourangle"),
+                        "ra_err": Angle(line[i+1] if line[i+1].startswith("00:00:") else "00:00:" + line[i+1], "hourangle"),
                         "dec": Angle(line[i+2], "deg"),
-                        "dec_err": Angle(line[i+3], "deg"),
+                        "dec_err": Angle(line[i+3] if line[i+3].startswith("00:00:") else "00:00:" + line[i+3], "deg"),
                         "flux": Decimal(line[i+4]),
                         "flux_err": Decimal(line[i+5]),
                         "is_main": line[i+6]
@@ -201,9 +201,9 @@ def cli():
     parser.add_argument("--drawband", type=str, help="draw only images for this specific band")
     parser.add_argument("--draw", action="store_true", help="WIP: draw figures")
     parser.add_argument("--getmain", action="store_true", help="draw figures and ask for input to get main source")
-    parser.add_argument("--forcegetmain", action="store_true", help="force getmain to ignore already checked sources")
+    parser.add_argument("--forcegetmain", action="store_true", help="force getmain to ignore already checked sources [--getmain]")
     parser.add_argument("--drawangsep", type=str, help="draw angsep for specified band")
-    parser.add_argument("--leftmost", action="store_true", help="draw angsep using leftmost source as main")
+    parser.add_argument("--leftmost", action="store_true", help="draw angsep using leftmost source as main [--drawangsep]")
     args = parser.parse_args()
 
     if args.fitsfolder:
@@ -234,14 +234,14 @@ def cli():
         draw.init()
         for date, bands in fit_dict.items():
             for band, datasources in bands.items():
-                if any([s["is_main"] == "" for s in datasources["sources"]]) or args.forcegetmain:
+                if not args.leftmost and (any([s["is_main"] == "" for s in datasources["sources"]]) or args.forcegetmain):
                     sources = draw.getmain(
                         date=date, 
                         band=band, 
                         sources=datasources["sources"], 
                         imagesfolder=args.imagesfolder, 
                         output=args.output, 
-                        contours=args.contours, 
+                        contours=args.contours,
                         save=args.save
                     )
                 sources = datasources["sources"]
