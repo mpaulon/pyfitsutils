@@ -150,9 +150,9 @@ def fit_csv_to_dict(fit_csv: Path):
                 fits_dict[fit_date][fit_freq]["sources"].append(
                     {
                         "ra": Angle(line[i], "hourangle"),
-                        "ra_err": Angle(line[i+1] if line[i+1].startswith("00:00:") else "00:00:" + line[i+1], "hourangle"),
+                        "ra_err": Angle(line[i+1] if ":00:" in line[i+1] else "00:00:" + line[i+1], "hourangle"),
                         "dec": Angle(line[i+2], "deg"),
-                        "dec_err": Angle(line[i+3] if line[i+3].startswith("00:00:") else "00:00:" + line[i+3], "deg"),
+                        "dec_err": Angle(line[i+3] if ":00:" in line[i+3] else "00:00:" + line[i+3], "deg"),
                         "flux": Decimal(line[i+4]),
                         "flux_err": Decimal(line[i+5]),
                         "is_main": line[i+6]
