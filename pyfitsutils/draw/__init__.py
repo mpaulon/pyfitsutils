@@ -136,8 +136,8 @@ def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False):
     plt.xlabel("Date")
     plt.minorticks_on()
     plt.tick_params(axis ='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
-    plt.savefig(output / f"angsep_{band_chosen}.jpg",bbox_inches='tight',dpi=300)
-    plt.savefig(output / f"angsep_{band_chosen}.pdf",bbox_inches='tight')
+    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%M%d_%H%M%S')}{'left' if leftmost else ''}.jpg",bbox_inches='tight',dpi=300)
+    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%M%d_%H%M%S')}{'left' if leftmost else ''}.pdf",bbox_inches='tight')
     plt.show()
 
 def getmain(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool):
