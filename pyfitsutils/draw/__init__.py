@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Optional
 
 import aplpy
-from matplotlib import image
 import numpy as np
 import matplotlib.pyplot as plt
+
+from astropy.time import Time
 
 from pyfitsutils import utils, settings
 
@@ -130,14 +131,19 @@ def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False):
                     main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
                     source["ra"], source["ra_err"], source["dec"], source["dec_err"],
                 )
-                plt.errorbar(date, sep[0].arcsec, yerr=np.sqrt(sep[1].arcsec**2+beam_err**2),marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                if source["ra"].arcsec > main_source["ra"].arcsec:
+                    plt.errorbar(f"{Time(date).mjd} ({date.strftime('%Y/%m/%d')})", -sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                else:
+                    plt.errorbar(f"{Time(date).mjd} ({date.strftime('%Y/%m/%d')})", sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+
 
     plt.ylabel("Angular separation (as)")
     plt.xlabel("Date")
     plt.minorticks_on()
-    plt.tick_params(axis ='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
-    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%M%d_%H%M%S')}{'left' if leftmost else ''}.jpg",bbox_inches='tight',dpi=300)
-    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%M%d_%H%M%S')}{'left' if leftmost else ''}.pdf",bbox_inches='tight')
+    plt.tick_params(axis='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
+    plt.xticks(rotation=45)
+    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else ''}.jpg",bbox_inches='tight',dpi=300)
+    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else ''}.pdf",bbox_inches='tight')
     plt.show()
 
 def getmain(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool):
