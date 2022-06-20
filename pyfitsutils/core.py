@@ -203,7 +203,10 @@ def cli():
     parser.add_argument("--getmain", action="store_true", help="draw figures and ask for input to get main source")
     parser.add_argument("--forcegetmain", action="store_true", help="force getmain to ignore already checked sources [--getmain]")
     parser.add_argument("--drawangsep", type=str, help="draw angsep for specified band")
+    parser.add_argument("--drawangsepbrightest", type=str, help="draw angsep vs brightest for specified band")
+    parser.add_argument("--drawflux", type=str, help="draw flux for specified band")
     parser.add_argument("--leftmost", action="store_true", help="draw angsep using leftmost source as main [--drawangsep]")
+    parser.add_argument("--rightmost", action="store_true", help="draw angsep using rightmost source as main [--drawangsep]")
     args = parser.parse_args()
 
     if args.fitsfolder:
@@ -230,11 +233,11 @@ def cli():
                     save=args.save
                 )
 
-    elif args.getmain or args.drawangsep:
+    elif args.getmain or args.drawangsep or args.drawangsepbrightest :
         draw.init()
         for date, bands in fit_dict.items():
             for band, datasources in bands.items():
-                if not args.leftmost and (any([s["is_main"] == "" for s in datasources["sources"]]) or args.forcegetmain):
+                if not (args.leftmost or args.rightmost) and (any([s["is_main"] == "" for s in datasources["sources"]]) or args.forcegetmain):
                     sources = draw.getmain(
                         date=date, 
                         band=band, 
@@ -255,7 +258,26 @@ def cli():
             fit_dict,
             args.drawangsep,
             args.output,
-            args.leftmost
+            args.leftmost,
+            args.rightmost
+        )
+
+    if args.drawangsepbrightest:
+        draw.draw_angsep_brightest(
+            fit_dict,
+            args.drawangsepbrightest,
+            args.output,
+            args.leftmost,
+            args.rightmost
+        )
+
+    if args.drawflux:
+        draw.draw_flux(
+            fit_dict,
+            args.drawflux,
+            args.output,
+            args.leftmost,
+            args.rightmost
         )
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from typing import Optional
 import aplpy
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from astropy.time import Time
 
@@ -95,7 +96,7 @@ def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Pat
     fig1.tick_labels.set_font(size=settings.AXIS_SIZE)
     fig1.axis_labels.set_font(size=settings.AXIS_SIZE)
 
-    fig1.set_title(f"XTE J1748-288 {date} {band} with robust=0",fontsize = settings.TITLE_SIZE)
+    fig1.set_title(f"XTE J1748-288 {date.strftime('%Y-%m-%d')} {band} with robust=0",fontsize = settings.TITLE_SIZE)
 
     # pour la barre de 1arcsec en bas à gauche
     fig1.add_scalebar(1./3600)
@@ -112,7 +113,7 @@ def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Pat
     
     return fig
 
-def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False):
+def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
     for date, bands in fit_dict.items():
         for band, sourcesdata in bands.items():
             plt.figure(1)
@@ -120,6 +121,9 @@ def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False):
                 continue
             if leftmost:
                 sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                main_source = sourcesdata["sources"][0]
+            elif rightmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"])
                 main_source = sourcesdata["sources"][0]
             else:
                 main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
@@ -132,19 +136,84 @@ def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False):
                     source["ra"], source["ra_err"], source["dec"], source["dec_err"],
                 )
                 if source["ra"].arcsec > main_source["ra"].arcsec:
-                    plt.errorbar(f"{Time(date).mjd} ({date.strftime('%Y/%m/%d')})", -sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                    plt.errorbar(Time(date).mjd, -sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
                 else:
-                    plt.errorbar(f"{Time(date).mjd} ({date.strftime('%Y/%m/%d')})", sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                    plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
 
 
     plt.ylabel("Angular separation (as)")
     plt.xlabel("Date")
     plt.minorticks_on()
     plt.tick_params(axis='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
-    plt.xticks(rotation=45)
-    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else ''}.jpg",bbox_inches='tight',dpi=300)
-    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else ''}.pdf",bbox_inches='tight')
+    plt.xticks(rotation=90)
+    plt.gca().xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x,_: f"({Time(x,format='mjd').to_value('iso', subfmt='date')}) {x}"))
+    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.jpg",bbox_inches='tight',dpi=300)
+    plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.pdf",bbox_inches='tight')
     plt.show()
+
+
+def draw_flux(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
+    for date, bands in fit_dict.items():
+        for band, sourcesdata in bands.items():
+            plt.figure(1)
+            if band != band_chosen:
+                continue
+            if leftmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                main_source = sourcesdata["sources"][0]
+            elif rightmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                main_source = sourcesdata["sources"][0]
+            else:
+                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+            plt.errorbar(Time(date).mjd, main_source["flux"], yerr=main_source["flux_err"],marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+    plt.ylabel("Flux (mJy)")
+    plt.xlabel("Date")
+    plt.minorticks_on()
+    plt.tick_params(axis='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
+    plt.xticks(rotation=90)
+    plt.gca().xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x,_: f"({Time(x,format='mjd').to_value('iso', subfmt='date')}) {x}"))
+    plt.savefig(output / f"flux_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.jpg",bbox_inches='tight',dpi=300)
+    plt.savefig(output / f"flux_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.pdf",bbox_inches='tight')
+    plt.show()
+
+
+def draw_angsep_brightest(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
+    for date, bands in fit_dict.items():
+        for band, sourcesdata in bands.items():
+            plt.figure(1)
+            if band != band_chosen:
+                continue
+            if leftmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                main_source = sourcesdata["sources"][0]
+                not_main_sources = sourcesdata["sources"][1:]
+            elif rightmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                main_source = sourcesdata["sources"][0]
+                not_main_sources = sourcesdata["sources"][1:]
+            else:
+                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+                not_main_sources = list(filter(lambda x: int(x["is_main"]) != 1, sourcesdata["sources"]))
+
+            not_main_sources.sort(key=lambda x: x["flux"], reverse=True)
+            source = not_main_sources[0]
+            sep = utils.angsep(
+                    main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
+                    source["ra"], source["ra_err"], source["dec"], source["dec_err"],
+                )
+            plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+
+    plt.ylabel("Angular separation vs brightest (as)")
+    plt.xlabel("Date")
+    plt.minorticks_on()
+    plt.tick_params(axis='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
+    plt.xticks(rotation=90)
+    plt.gca().xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x,_: f"({Time(x,format='mjd').to_value('iso', subfmt='date')}) {x}"))
+    plt.savefig(output / f"angsep_brightest_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.jpg",bbox_inches='tight',dpi=300)
+    plt.savefig(output / f"angsep_brightest_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.pdf",bbox_inches='tight')
+    plt.show()
+
 
 def getmain(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool):
     fig = draw_sources(
