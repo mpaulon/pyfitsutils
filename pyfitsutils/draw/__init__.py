@@ -197,6 +197,11 @@ def draw_angsep_brightest(fit_dict: dict, band_chosen: str, output: Path, leftmo
                 not_main_sources = list(filter(lambda x: int(x["is_main"]) != 1, sourcesdata["sources"]))
 
             not_main_sources.sort(key=lambda x: x["flux"], reverse=True)
+            if len(not_main_sources) == 0:
+            #    continue # si tu veux juste ne rien faire
+            # ou alors
+                plt.errorbar(Time(date).mjd, 0, yerr=0,marker="o",color="red", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black') 
+                continue # si tu veux mettre un point à 0
             source = not_main_sources[0]
             sep = utils.angsep(
                     main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
