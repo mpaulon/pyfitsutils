@@ -17,9 +17,9 @@ def angsep(ra1,err_ra1,dec1,err_dec1,ra2,err_ra2,dec2,err_dec2):
     s = x+y+z
     coeff = 1.0/np.sqrt(1-(s)**2)
     termera1 = np.cos(dec1.rad)*np.cos(dec2.rad)*(np.sin(ra1.rad)*np.cos(ra2.rad)-np.cos(ra1.rad)*np.sin(ra2.rad))
-    termedec1 = np.cos(ra1.rad)*np.sin(dec1.rad)*np.cos(ra1.rad)*np.cos(dec2.rad) + np.sin(ra1.rad)*np.sin(dec1.rad)*np.sin(ra1.rad)*np.cos(dec2.rad) - np.cos(dec1.rad)*np.sin(dec2.rad)
+    termedec1 = np.cos(ra1.rad)*np.sin(dec1.rad)*np.cos(ra2.rad)*np.cos(dec2.rad) + np.sin(ra1.rad)*np.sin(dec1.rad)*np.sin(ra2.rad)*np.cos(dec2.rad) - np.cos(dec1.rad)*np.sin(dec2.rad)
     termera2 = np.cos(dec1.rad)*np.cos(dec2.rad)*(np.cos(ra1.rad)*np.sin(ra2.rad)-np.sin(ra1.rad)*np.cos(ra2.rad))
-    termedec2 = np.cos(ra1.rad)*np.cos(dec1.rad)*np.cos(ra1.rad)*np.sin(dec2.rad) + np.sin(ra1.rad)*np.cos(dec1.rad)*np.sin(ra1.rad)*np.sin(dec2.rad) - np.sin(dec1.rad)*np.cos(dec2.rad)
+    termedec2 = np.cos(ra1.rad)*np.cos(dec1.rad)*np.cos(ra2.rad)*np.sin(dec2.rad) + np.sin(ra1.rad)*np.cos(dec1.rad)*np.sin(ra2.rad)*np.sin(dec2.rad) - np.sin(dec1.rad)*np.cos(dec2.rad)
 
     err_angsep = coeff * ((err_ra1.rad*termera1)**2 + (err_dec1.rad*termedec1)**2 + (err_ra2.rad*termera2)**2 + (err_dec2.rad*termedec2)**2)**0.5
 
