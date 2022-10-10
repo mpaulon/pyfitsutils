@@ -85,6 +85,26 @@ def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Pat
 
     draw_target(fig1, settings.TARGET) # show target as a blue cross with error bars on the figure
 
+    line_27jun = np.array([
+            [267.021252 - 9.58333333333e-07, 267.021252 + 9.58333333333e-07],
+            [-28.4737730833, -28.4737730833]
+        ]),np.array([
+            [267.021252, 267.021252],
+            [-28.4737730833 - 1.66944444444e-06, -28.4737730833 + 1.66944444444e-06]
+        ])
+        
+    fig1.show_lines(line_27jun,color='pink',linewidth=1.5) #croix 27jun1999
+
+    line_26oct = np.array([
+            [267.021248292 - 4.58333333333e-06, 267.021248292 + 4.58333333333e-06],
+            [-28.4737315028, -28.4737315028]
+        ]),np.array([
+            [267.021248292, 267.021248292],
+            [-28.4737315028 - 1.18416666667e-05, -28.4737315028 + 1.18416666667e-05]
+        ])
+        
+    fig1.show_lines(line_26oct,color='green',linewidth=1.5) #croix 26oct2000
+
     # add label for each source
     for i, source in enumerate(sources):
         draw_target(fig1, source, label=str(i), cross=False)
