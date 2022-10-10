@@ -171,6 +171,46 @@ def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, 
     plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.pdf",bbox_inches='tight')
     plt.show()
 
+def draw_rasep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, reference=False):
+    for date, bands in fit_dict.items():
+        for band, sourcesdata in bands.items():
+            plt.figure(1)
+            if band != band_chosen:
+                continue
+            if leftmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                main_source = sourcesdata["sources"][0]
+            elif rightmost:
+                sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                main_source = sourcesdata["sources"][0]
+            elif target:
+                main_source = target
+            else:
+                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+            
+            for source in sourcesdata["sources"]:
+                if source == main_source:
+                    continue
+                sep = utils.rasep(
+                    main_source["ra"], main_source["ra_err"],
+                    source["ra"], source["ra_err"], 
+                )
+                if source["ra"].arcsec > main_source["ra"].arcsec:
+                    plt.errorbar(Time(date).mjd, -sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                else:
+                    plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+
+
+    plt.ylabel("RA Separation (as)")
+    plt.xlabel("Date")
+    plt.minorticks_on()
+    plt.tick_params(axis='both',which='both',direction = 'in', top=True, right=True)#, labelsize = 12)
+    plt.xticks(rotation=90)
+    plt.gca().xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x,_: f"({Time(x,format='mjd').to_value('iso', subfmt='date')}) {x}"))
+    plt.savefig(output / f"rasep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else 'reference' if reference else ''}.jpg",bbox_inches='tight',dpi=300)
+    plt.savefig(output / f"rasep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else 'reference' if reference else ''}.pdf",bbox_inches='tight')
+    plt.show()
+
 
 def draw_flux(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
     for date, bands in fit_dict.items():
