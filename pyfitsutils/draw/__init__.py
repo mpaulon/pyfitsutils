@@ -24,9 +24,11 @@ def init(rms_csvs: list[Path]):
     ## commence par lecture du tableau provenant du Google Sheets
     ## il faut pouvoir récupérer max, min et rms pour chaque bande et date
     for i, rms_csv in enumerate(rms_csvs):
+        settings.LIST_DICT_SHEET.append({})
         with open(rms_csv) as f:
             lines = csv.reader(f, delimiter = ",")
             for line in lines:
+
                 settings.LIST_DICT_SHEET[i][line[1]] = {"Lband":[line[4],line[5],line[6]], "Cband":[line[7],line[8],line[9]], "Xband":[line[10],line[11],line[12]], "Kuband":[line[13],line[14],line[15]], "Kband":[line[16],line[17],line[18]]}
 
 
