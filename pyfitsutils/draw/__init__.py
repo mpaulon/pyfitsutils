@@ -177,12 +177,13 @@ def draw_angsep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False,
     plt.show()
 
 def draw_rasep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, reference=False, maxdate=None):
+    plt.figure(1)
+    logger.info("drawrasep")
     for i, fit_dict in enumerate(fit_dicts):
         for date, bands in fit_dict.items():
             if maxdate and Time(date).mjd > maxdate :
                 continue
             for band, sourcesdata in bands.items():
-                plt.figure(1)
                 if band != band_chosen:
                     continue
                 if leftmost:
@@ -203,6 +204,7 @@ def draw_rasep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, 
                         main_source["ra"], main_source["ra_err"],
                         source["ra"], source["ra_err"], 
                     )
+                    logger.info(f"{Time(date).mjd}, {sep[0].arcsec}")
                     plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color=settings.COLORS[i%len(settings.COLORS)], ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
 
 

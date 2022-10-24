@@ -43,7 +43,7 @@ def cli():
 
     assert len(args.imagesfolder) == len(args.csv), "there should be the same amount of images folders and csv files"
 
-    fit_dicts = fits.Fit.folders_and_csv2dict(args.csv, args.fitsfolder)
+    fit_dicts = list(fits.Fit.folders_and_csv2dict(args.csv, args.fitsfolder))
 
     if args.draw or args.getmain or args.drawangsep or args.drawangsepbrightest or args.drawrasep or args.drawflux:
         draw.init(args.rmscsv)
