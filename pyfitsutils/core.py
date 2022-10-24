@@ -38,6 +38,7 @@ def cli():
     parser.add_argument("--leftmost", action="store_true", help="draw angsep using leftmost source as main [--drawangsep]")
     parser.add_argument("--rightmost", action="store_true", help="draw angsep using rightmost source as main [--drawangsep]")
     parser.add_argument("--reference", action="store_true", help="draw rasep using reference source as main [--drawrasep]")
+    parser.add_argument("--maxdate", type=int, help="do not draw anything more recent than maxdate")
     args = parser.parse_args()
 
     assert len(args.imagesfolder) == len(args.csv), "there should be the same amount of images folders and csv files"
@@ -100,7 +101,9 @@ def cli():
             args.drawrasep,
             args.output,
             args.leftmost,
-            args.rightmost
+            args.rightmost,
+            args.reference,
+            args.maxdate
         )
 
     if args.drawangsepbrightest:
