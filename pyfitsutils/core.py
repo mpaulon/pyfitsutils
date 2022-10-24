@@ -49,7 +49,7 @@ def cli():
         draw.init(args.rmscsv)
 
     if args.draw:
-        for i, f_dict in fit_dicts:
+        for i, f_dict in enumerate(fit_dicts):
             for date, bands in f_dict.items():
                 for band, datasources in bands.items():
                     if args.drawband and not band == args.drawband:
@@ -66,7 +66,7 @@ def cli():
                     )
 
     elif args.getmain or args.drawangsep or args.drawangsepbrightest or args.drawrasep or args.drawflux:
-        for i, f_dict in fit_dicts:
+        for i, f_dict in enumerate(fit_dicts):
             for date, bands in f_dict.items():
                 for band, datasources in bands.items():
                     if not (args.leftmost or args.rightmost) and (any([s["is_main"] == "" for s in datasources["sources"]]) or args.forcegetmain):
