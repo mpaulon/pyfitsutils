@@ -17,3 +17,4 @@ TARGET = {
 }
 
 CONTOUR_COEFS = [3, 5, 10, 20, 30]
+COLORS = ["magenta", "red", "green", "blue"]

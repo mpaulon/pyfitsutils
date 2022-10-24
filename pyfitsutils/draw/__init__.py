@@ -16,17 +16,18 @@ from pyfitsutils import utils, settings
 
 logger = logging.getLogger(__name__)
 
-def init():
+def init(rms_csvs: list[Path]):
     plt.style.use('seaborn-paper')
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
 
     ## commence par lecture du tableau provenant du Google Sheets
     ## il faut pouvoir récupérer max, min et rms pour chaque bande et date
-    with open("XTEJ1748-288_maxminrms_Sheets.csv") as f:
-        lines = csv.reader(f, delimiter = ",")
-        for line in lines:
-            settings.DICT_SHEET[line[1]] = {"Lband":[line[4],line[5],line[6]], "Cband":[line[7],line[8],line[9]], "Xband":[line[10],line[11],line[12]], "Kuband":[line[13],line[14],line[15]], "Kband":[line[16],line[17],line[18]]}
+    for i, rms_csv in enumerate(rms_csvs):
+        with open(rms_csv) as f:
+            lines = csv.reader(f, delimiter = ",")
+            for line in lines:
+                settings.LIST_DICT_SHEET[i][line[1]] = {"Lband":[line[4],line[5],line[6]], "Cband":[line[7],line[8],line[9]], "Xband":[line[10],line[11],line[12]], "Kuband":[line[13],line[14],line[15]], "Kband":[line[16],line[17],line[18]]}
 
 
 def load_fits(images_folder: Path, date: datetime.datetime, band: str) -> Optional[Path]:
@@ -55,12 +56,13 @@ def draw_target(fig, target, label="", cross=True):
     if label:
         fig.add_label(target["ra"].deg, target["dec"].deg, label, color='dodgerblue', size=settings.LABEL_SIZE)
 
-def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool):
+def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool, data_index: int):
+    settings_dict = settings.LIST_DICT_SHEET[data_index]
     img = load_fits(imagesfolder, date, band)
     if not img:
         return
 
-    min_val, max_val, rms = (float(x) for x in settings.DICT_SHEET[date.strftime('%d/%m/%Y')][f"{band}band"][0:3])
+    min_val, max_val, rms = (float(x) for x in settings_dict[date.strftime('%d/%m/%Y')][f"{band}band"][0:3])
     max_val = max_val / 2
 
     levels = [c*rms for c in settings.CONTOUR_COEFS]
@@ -128,37 +130,38 @@ def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Pat
 
     if save:
         logger.info("Saving figures")
-        fig.savefig(output / (f"XTEJ1748-288_{date.strftime('%Y-%m-%d')}_{band}_rob0.png"), format='png', dpi=300, bbox_inches='tight')
-        fig.savefig(output / (f"XTEJ1748-288_{date.strftime('%Y-%m-%d')}_{band}_rob0.pdf"), bbox_inches='tight', pad_inches = 0.05)
+        fig.savefig(output / (f"XTEJ1748-288_{data_index}_{date.strftime('%Y-%m-%d')}_{band}_rob0.png"), format='png', dpi=300, bbox_inches='tight')
+        fig.savefig(output / (f"XTEJ1748-288_{data_index}_{date.strftime('%Y-%m-%d')}_{band}_rob0.pdf"), bbox_inches='tight', pad_inches = 0.05)
     
     return fig
 
-def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
-    for date, bands in fit_dict.items():
-        for band, sourcesdata in bands.items():
-            plt.figure(1)
-            if band != band_chosen:
-                continue
-            if leftmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
-                main_source = sourcesdata["sources"][0]
-            elif rightmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"])
-                main_source = sourcesdata["sources"][0]
-            else:
-                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
-            beam_err = 0.1*np.sqrt(float(sourcesdata["data"]["minor"])*float(sourcesdata["data"]["major"]))
-            for source in sourcesdata["sources"]:
-                if source == main_source:
+def draw_angsep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
+    for i, fit_dict in enumerate(fit_dicts):
+        for date, bands in fit_dict.items():
+            for band, sourcesdata in bands.items():
+                plt.figure(1)
+                if band != band_chosen:
                     continue
-                sep = utils.angsep(
-                    main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
-                    source["ra"], source["ra_err"], source["dec"], source["dec_err"],
-                )
-                if source["ra"].arcsec > main_source["ra"].arcsec:
-                    plt.errorbar(Time(date).mjd, -sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                if leftmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                    main_source = sourcesdata["sources"][0]
+                elif rightmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                    main_source = sourcesdata["sources"][0]
                 else:
-                    plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                    main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+                beam_err = 0.1*np.sqrt(float(sourcesdata["data"]["minor"])*float(sourcesdata["data"]["major"]))
+                for source in sourcesdata["sources"]:
+                    if source == main_source:
+                        continue
+                    sep = utils.angsep(
+                        main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
+                        source["ra"], source["ra_err"], source["dec"], source["dec_err"],
+                    )
+                    if source["ra"].arcsec > main_source["ra"].arcsec:
+                        plt.errorbar(Time(date).mjd, -sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color=settings.COLORS[i%len(settings.COLORS)], ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                    else:
+                        plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color=settings.COLORS[i%len(settings.COLORS)], ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
 
 
     plt.ylabel("Angular separation (as)")
@@ -171,33 +174,34 @@ def draw_angsep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, 
     plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.pdf",bbox_inches='tight')
     plt.show()
 
-def draw_rasep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, reference=False, maxdate=None):
-    for date, bands in fit_dict.items():
-        if maxdate and Time(date).mjd > maxdate :
-            continue
-        for band, sourcesdata in bands.items():
-            plt.figure(1)
-            if band != band_chosen:
+def draw_rasep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, reference=False, maxdate=None):
+    for i, fit_dict in enumerate(fit_dicts):
+        for date, bands in fit_dict.items():
+            if maxdate and Time(date).mjd > maxdate :
                 continue
-            if leftmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
-                main_source = sourcesdata["sources"][0]
-            elif rightmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"])
-                main_source = sourcesdata["sources"][0]
-            elif reference:
-                main_source = settings.TARGET
-            else:
-                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
-            
-            for source in sourcesdata["sources"]:
-                if source == main_source:
+            for band, sourcesdata in bands.items():
+                plt.figure(1)
+                if band != band_chosen:
                     continue
-                sep = utils.rasep(
-                    main_source["ra"], main_source["ra_err"],
-                    source["ra"], source["ra_err"], 
-                )
-                plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                if leftmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                    main_source = sourcesdata["sources"][0]
+                elif rightmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                    main_source = sourcesdata["sources"][0]
+                elif reference:
+                    main_source = settings.TARGET
+                else:
+                    main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+                
+                for source in sourcesdata["sources"]:
+                    if source == main_source:
+                        continue
+                    sep = utils.rasep(
+                        main_source["ra"], main_source["ra_err"],
+                        source["ra"], source["ra_err"], 
+                    )
+                    plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color=settings.COLORS[i%len(settings.COLORS)], ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
 
 
     plt.ylabel("RA Separation (as)")
@@ -211,21 +215,22 @@ def draw_rasep(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, r
     plt.show()
 
 
-def draw_flux(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
-    for date, bands in fit_dict.items():
-        for band, sourcesdata in bands.items():
-            plt.figure(1)
-            if band != band_chosen:
-                continue
-            if leftmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
-                main_source = sourcesdata["sources"][0]
-            elif rightmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"])
-                main_source = sourcesdata["sources"][0]
-            else:
-                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
-            plt.errorbar(Time(date).mjd, main_source["flux"], yerr=main_source["flux_err"],marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+def draw_flux(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
+    for i, fit_dict in enumerate(fit_dicts):
+        for date, bands in fit_dict.items():
+            for band, sourcesdata in bands.items():
+                plt.figure(1)
+                if band != band_chosen:
+                    continue
+                if leftmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                    main_source = sourcesdata["sources"][0]
+                elif rightmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                    main_source = sourcesdata["sources"][0]
+                else:
+                    main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+                plt.errorbar(Time(date).mjd, main_source["flux"], yerr=main_source["flux_err"],marker="o",color=settings.COLORS[i%len(settings.COLORS)], ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
     plt.ylabel("Flux (mJy)")
     plt.xlabel("Date")
     plt.minorticks_on()
@@ -237,36 +242,37 @@ def draw_flux(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, ri
     plt.show()
 
 
-def draw_angsep_brightest(fit_dict: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
-    for date, bands in fit_dict.items():
-        for band, sourcesdata in bands.items():
-            plt.figure(1)
-            if band != band_chosen:
-                continue
-            if leftmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
-                main_source = sourcesdata["sources"][0]
-                not_main_sources = sourcesdata["sources"][1:]
-            elif rightmost:
-                sourcesdata["sources"].sort(key=lambda x: x["ra"])
-                main_source = sourcesdata["sources"][0]
-                not_main_sources = sourcesdata["sources"][1:]
-            else:
-                main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
-                not_main_sources = list(filter(lambda x: int(x["is_main"]) != 1, sourcesdata["sources"]))
+def draw_angsep_brightest(fit_dicts: list[dict], band_chosen: str, output: Path, leftmost=False, rightmost=False):
+    for i, fit_dict in enumerate(fit_dicts):
+        for date, bands in fit_dict.items():
+            for band, sourcesdata in bands.items():
+                plt.figure(1)
+                if band != band_chosen:
+                    continue
+                if leftmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"], reverse=True)
+                    main_source = sourcesdata["sources"][0]
+                    not_main_sources = sourcesdata["sources"][1:]
+                elif rightmost:
+                    sourcesdata["sources"].sort(key=lambda x: x["ra"])
+                    main_source = sourcesdata["sources"][0]
+                    not_main_sources = sourcesdata["sources"][1:]
+                else:
+                    main_source = list(filter(lambda x: int(x["is_main"]) == 1, sourcesdata["sources"]))[0]
+                    not_main_sources = list(filter(lambda x: int(x["is_main"]) != 1, sourcesdata["sources"]))
 
-            not_main_sources.sort(key=lambda x: x["flux"], reverse=True)
-            if len(not_main_sources) == 0:
-            #    continue # si tu veux juste ne rien faire
-            # ou alors
-                plt.errorbar(Time(date).mjd, 0, yerr=0,marker="o",color="red", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black') 
-                continue # si tu veux mettre un point à 0
-            source = not_main_sources[0]
-            sep = utils.angsep(
-                    main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
-                    source["ra"], source["ra_err"], source["dec"], source["dec_err"],
-                )
-            plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color="magenta", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
+                not_main_sources.sort(key=lambda x: x["flux"], reverse=True)
+                if len(not_main_sources) == 0:
+                #    continue # si tu veux juste ne rien faire
+                # ou alors
+                    plt.errorbar(Time(date).mjd, 0, yerr=0,marker="o",color="red", ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black') 
+                    continue # si tu veux mettre un point à 0
+                source = not_main_sources[0]
+                sep = utils.angsep(
+                        main_source["ra"], main_source["ra_err"], main_source["dec"], main_source["dec_err"],
+                        source["ra"], source["ra_err"], source["dec"], source["dec_err"],
+                    )
+                plt.errorbar(Time(date).mjd, sep[0].arcsec, yerr=sep[1].arcsec,marker="o",color=settings.COLORS[i%len(settings.COLORS)], ecolor='black', linestyle='', capsize=1, elinewidth=0.5, markeredgewidth=0.3, markersize=3, markeredgecolor='black')
 
     plt.ylabel("Angular separation vs brightest (as)")
     plt.xlabel("Date")
@@ -279,7 +285,7 @@ def draw_angsep_brightest(fit_dict: dict, band_chosen: str, output: Path, leftmo
     plt.show()
 
 
-def getmain(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool):
+def getmain(date: datetime.date, band: str, sources: list, imagesfolder:Path, output: Path, contours: bool, save: bool, data_index: int):
     fig = draw_sources(
         date=date, 
         band=band, 
@@ -287,7 +293,8 @@ def getmain(date: datetime.date, band: str, sources: list, imagesfolder:Path, ou
         imagesfolder=imagesfolder, 
         output=output, 
         contours=contours, 
-        save=save
+        save=save,
+        data_index=data_index
     )
     if fig:
         plt.ion()
