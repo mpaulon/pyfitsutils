@@ -32,5 +32,5 @@ def angsep(ra1,err_ra1,dec1,err_dec1,ra2,err_ra2,dec2,err_dec2):
 def rasep(ra1,err_ra1,ra2,err_ra2):
 
     res = ra1.deg - ra2.deg
-    error = err_ra1 + err_ra2
-    return(res, error)
+    error = np.sqrt(err_ra1**2 + err_ra2**2)
+    return(Angle(res, "deg"),Angle(error,"deg"))

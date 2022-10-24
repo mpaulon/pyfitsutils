@@ -209,6 +209,7 @@ def cli():
     parser.add_argument("--leftmost", action="store_true", help="draw angsep using leftmost source as main [--drawangsep]")
     parser.add_argument("--rightmost", action="store_true", help="draw angsep using rightmost source as main [--drawangsep]")
     parser.add_argument("--reference", action="store_true", help="draw rasep using reference source as main [--drawrasep]")
+    parser.add_argument("--maxdate", type=int, help="do not draw anything more recent than maxdate")
     args = parser.parse_args()
 
     if args.fitsfolder:
@@ -264,13 +265,15 @@ def cli():
             args.rightmost
         )
 
-    if args.rasep:
+    if args.drawrasep:
         draw.draw_rasep(
             fit_dict,
-            args.rasep,
+            args.drawrasep,
             args.output,
             args.leftmost,
-            args.rightmost
+            args.rightmost,
+            args.reference,
+            args.maxdate
         )
 
     if args.drawangsepbrightest:
