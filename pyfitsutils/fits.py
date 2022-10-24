@@ -140,7 +140,7 @@ class Fit:
                     "data": dict(zip(["freq", "major", "minor"], line[2:5]))
                 }
                 fits_dict[fit_date][fit_freq]["sources"] = []
-                for i in range(5, len(line[5:]), SOURCE_LEN):
+                for i in range(5, len(line[5:]), cls.SOURCE_LEN):
                     fits_dict[fit_date][fit_freq]["sources"].append(
                         {
                             "ra": Angle(line[i], "hourangle"),
