@@ -45,7 +45,7 @@ def cli():
 
     fit_dicts = fits.Fit.folders_and_csv2dict(args.csv, args.fitsfolder)
 
-    if args.draw or args.getmain or args.drawangsept or args.drawangsepbrightest or args.drawrasep or args.drawflux:
+    if args.draw or args.getmain or args.drawangsep or args.drawangsepbrightest or args.drawrasep or args.drawflux:
         draw.init(args.rmscsv)
 
     if args.draw:
