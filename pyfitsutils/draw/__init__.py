@@ -33,7 +33,7 @@ def init(rms_csvs: list[Path]):
 
 
 def load_fits(images_folder: Path, date: datetime.datetime, band: str) -> Optional[Path]:
-    image_glob = f"{date.strftime('%d%b%Y').lower()}_{band}band_selfcal_rob0*"
+    image_glob = f"{date.strftime('%d%b%Y').lower()}_{band}band_*"
     fits_images = list(images_folder.glob(image_glob))
     if len(fits_images) == 1:
         return fits_images[0]
@@ -137,9 +137,16 @@ def draw_sources(date: datetime.date, band: str, sources: list, imagesfolder:Pat
     
     return fig
 
-def draw_angsep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
+def draw_angsep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, maxdate=None, listdate=None):
+    if listdate is not None: # on ouvre le fichier qu'une seule fois au lieu d'à chaque item
+        with open(listdate) as f :
+            list_dates = f.readlines() 
     for i, fit_dict in enumerate(fit_dicts):
         for date, bands in fit_dict.items():
+            if maxdate and Time(date).mjd > maxdate :
+                continue
+            if listdate and Time(date).mjd not in list_dates: # et là faut convertir la date en mjd
+                continue
             for band, sourcesdata in bands.items():
                 plt.figure(1)
                 if band != band_chosen:
@@ -176,12 +183,17 @@ def draw_angsep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False,
     plt.savefig(output / f"angsep_{band_chosen}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{'left' if leftmost else 'right' if rightmost else ''}.pdf",bbox_inches='tight')
     plt.show()
 
-def draw_rasep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, reference=False, maxdate=None):
+def draw_rasep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, reference=False, maxdate=None, listdate=None):
     plt.figure(1)
     logger.info("drawrasep")
+    if listdate is not None: # on ouvre le fichier qu'une seule fois au lieu d'à chaque item
+        with open(listdate) as f :
+            list_dates = f.readlines() 
     for i, fit_dict in enumerate(fit_dicts):
         for date, bands in fit_dict.items():
             if maxdate and Time(date).mjd > maxdate :
+                continue
+            if listdate and Time(date).mjd not in list_dates: # et là faut convertir la date en mjd
                 continue
             for band, sourcesdata in bands.items():
                 if band != band_chosen:
@@ -219,9 +231,16 @@ def draw_rasep(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, 
     plt.show()
 
 
-def draw_flux(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False):
+def draw_flux(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, rightmost=False, maxdate=None, listdate=None):
+    if listdate is not None: # on ouvre le fichier qu'une seule fois au lieu d'à chaque item
+        with open(listdate) as f :
+            list_dates = f.readlines() 
     for i, fit_dict in enumerate(fit_dicts):
         for date, bands in fit_dict.items():
+            if maxdate and Time(date).mjd > maxdate :
+                continue
+            if listdate and Time(date).mjd not in list_dates: # et là faut convertir la date en mjd
+                continue
             for band, sourcesdata in bands.items():
                 plt.figure(1)
                 if band != band_chosen:
@@ -246,9 +265,16 @@ def draw_flux(fit_dicts: dict, band_chosen: str, output: Path, leftmost=False, r
     plt.show()
 
 
-def draw_angsep_brightest(fit_dicts: list[dict], band_chosen: str, output: Path, leftmost=False, rightmost=False):
+def draw_angsep_brightest(fit_dicts: list[dict], band_chosen: str, output: Path, leftmost=False, rightmost=False, maxdate=None, listdate=None):
+    if listdate is not None: # on ouvre le fichier qu'une seule fois au lieu d'à chaque item
+        with open(listdate) as f :
+            list_dates = f.readlines() 
     for i, fit_dict in enumerate(fit_dicts):
         for date, bands in fit_dict.items():
+            if maxdate and Time(date).mjd > maxdate :
+                continue
+            if listdate and Time(date).mjd not in list_dates: # et là faut convertir la date en mjd
+                continue
             for band, sourcesdata in bands.items():
                 plt.figure(1)
                 if band != band_chosen:
